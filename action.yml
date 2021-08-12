@@ -87,7 +87,7 @@ runs:
       run: |
         sudo git clone --depth 1 https://gitlab.manjaro.org/tools/development-tools/manjaro-chrootbuild
         pushd manjaro-chrootbuild
-        sudo ./install.sh "PACKAGER = <Manjaro Build Server> <build@manjaro.org>"
+        sudo ./install.sh "PACKAGER = Manjaro Build Server <build@manjaro.org>"
         popd
     - id: clone_repo
       shell: bash
