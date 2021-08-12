@@ -1,4 +1,4 @@
-name: 'Manjaro Kernal Action'
+name: 'Manjaro Kernel Action'
 description: 'Builds Manjaro Kernels'
 
 runs:
