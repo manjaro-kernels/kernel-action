@@ -99,7 +99,7 @@ runs:
       shell: bash
       run: |
         sudo chrootbuild -np ${{ env.KERNEL }}
-    - id: publish kernel
+    - id: publish_kernel
       shell: bash -O extglob {0}
       run: |
         _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
