@@ -87,7 +87,7 @@ runs:
       run: |
         sudo git clone --depth 1 https://gitlab.manjaro.org/tools/development-tools/manjaro-chrootbuild
         pushd manjaro-chrootbuild
-        sudo ./install.sh "PACKAGER = <Manjaro Build Servere> <build@manjaro.org>"
+        sudo ./install.sh "PACKAGER = <Manjaro Build Server> <build@manjaro.org>"
         popd
     - id: clone_repo
       shell: bash
@@ -108,5 +108,5 @@ runs:
         echo ${{ github.token }} | gh auth login --with-token
         gh release create ${_tag} --title ${_tag} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${_tag}
-        gh release upload ${_tag} --repo ${{ github.repository }} --clobber ./*.pkg.tar.*
+        gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./*.pkg.tar.*
         
