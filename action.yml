@@ -118,6 +118,7 @@ runs:
         sudo rm build_log
         for l in $(ls); do
           sudo mv $l $l.log
+        done
         popd
         _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _rel=$(grep ^pkgrel= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
