@@ -114,10 +114,11 @@ runs:
       shell: bash -O extglob {0}
       run: |
         log_dir=/home/runner/.chrootbuild-logs
-        sudo rm ${log_dir}/build_log
-        for l in $(ls ${log_dir}); do
+        pushd ${log_dir}
+        sudo rm build_log
+        for l in $(ls); do
           sudo mv $l $l.log
-        done
+        popd
         _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _rel=$(grep ^pkgrel= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _tag=${_ver}-${_rel}
