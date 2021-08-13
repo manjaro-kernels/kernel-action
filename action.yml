@@ -113,10 +113,15 @@ runs:
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
+        log_dir=/home/runner/.chrootbuild-logs
+        sudo rm ${log_dir}/build_log
+        for l in $(ls ${log_dir}); do
+          sudo mv $l $l.log
+        done
         _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _rel=$(grep ^pkgrel= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _tag=${_ver}-${_rel}
         echo ${{ github.token }} | gh auth login --with-token
         gh release create ${_tag} --title ${_tag} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${_tag}
-        gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./*.pkg.tar.* /home/runner/.chrootbuild-logs/*
+        gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./*.pkg.tar.* ${log_dir}/*
