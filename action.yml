@@ -109,4 +109,26 @@ runs:
         gh release create ${_tag} --title ${_tag} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${_tag}
         gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./*.pkg.tar.*
-        
+        sudo rm ./*.pkg.tar.*
+        echo "TAG=${_tag}" >>$GITHUB_ENV
+        echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
+    - id: get_modules
+      shell: bash
+      run: |
+        sudo cp ${{ env.KERNEL }}/modules.list .
+        sudo mkdir modules
+        pushd modules
+        for m in $(cat ../modules.list); do
+          sudo git clone "https://gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
+        done
+        popd
+    - id: build_modules
+      shell: bash
+      run: |
+        sudo chrootbuild -K modules
+    - id: publish_modules
+      shell: bash -O extglob {0}
+      run: |
+        echo ${{ github.token }} | gh auth login --with-token
+        GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ env.TAG }}
+        gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./*.pkg.tar.*
