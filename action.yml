@@ -105,10 +105,12 @@ runs:
         _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _rel=$(grep ^pkgrel= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _tag=${_ver}-${_rel}
+        
+        sudo zip linux-${_tag}.zip ./*.pkg.tar.*
         echo ${{ github.token }} | gh auth login --with-token
         gh release create ${_tag} --title ${_tag} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${_tag}
-        gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./*.pkg.tar.*
+        gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${_tag}.zip
         sudo rm ./*.pkg.tar.*
         echo "TAG=${_tag}" >>$GITHUB_ENV
         echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
@@ -137,6 +139,7 @@ runs:
 #          sudo mv $l $l.log
 #        done
 #        popd
+        sudo zip linux-${{ env.TAG }}-extramodules.zip ./*.pkg.tar.* 
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ env.TAG }}
-        gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./*.pkg.tar.* # ${log_dir}/*
+        gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip # ${log_dir}/*
