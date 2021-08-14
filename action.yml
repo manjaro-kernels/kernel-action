@@ -132,14 +132,7 @@ runs:
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
-#        log_dir=/home/runner/.chrootbuild-logs
-#        pushd ${log_dir}
-#        sudo rm build_log
-#        for l in $(ls); do
-#          sudo mv $l $l.log
-#        done
-#        popd
-        sudo zip linux-${{ env.TAG }}-extramodules.zip ./*.pkg.tar.* 
+        sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.pkg.tar.* 
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ env.TAG }}
         gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip # ${log_dir}/*
