@@ -131,7 +131,9 @@ runs:
     - id: build_modules
       shell: bash
       run: |
-        sudo chrootbuild -K modules -i ${{ env.KERNEL }}/${{ env.KERNEL }}-*.zst -i ${{ env.KERNEL }}/${{ env.KERNEL }}-headers-*.zst
+        ls
+        echo "install local pkgs ${{ env.KERNEL }}/${{ env.KERNEL }}-*.zst and ${{ env.KERNEL }}/${{ env.KERNEL }}-headers-*.zst"
+        sudo chrootbuild -K modules -i "${{ env.KERNEL }}/${{ env.KERNEL }}-*.zst" -i "${{ env.KERNEL }}/${{ env.KERNEL }}-headers-*.zst"
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
