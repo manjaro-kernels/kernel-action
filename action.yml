@@ -112,9 +112,9 @@ runs:
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${_tag}
         gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${_tag}.zip
         for p in $(ls ./*.pkg.tar.*); do
-          echo "moving $p to ${{ env.KERNEL }}/"
-          sudo mv $p ${{ env.KERNEL }}/$p
+          sudo mv $p "${{ env.KERNEL }}/$p"
         done
+        ls
         echo "TAG=${_tag}" >>$GITHUB_ENV
         echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
     - id: get_modules
@@ -131,8 +131,6 @@ runs:
     - id: build_modules
       shell: bash
       run: |
-        ls
-        echo "install local pkgs ${{ env.KERNEL }}/${{ env.KERNEL }}-*.zst and ${{ env.KERNEL }}/${{ env.KERNEL }}-headers-*.zst"
         sudo chrootbuild -K modules -i "${{ env.KERNEL }}/${{ env.KERNEL }}-*.zst" -i "${{ env.KERNEL }}/${{ env.KERNEL }}-headers-*.zst"
     - id: publish_modules
       shell: bash -O extglob {0}
