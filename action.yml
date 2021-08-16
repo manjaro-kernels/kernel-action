@@ -111,7 +111,9 @@ runs:
         gh release create ${_tag} --title ${_tag} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${_tag}
         gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${_tag}.zip
-        sudo mv ./*.pkg.tar.* ${{ env.KERNEL }}/
+        for p in $(ls *.zst); do
+          sudo mv $p ${{ env.KERNEL }}/
+        done
         echo "TAG=${_tag}" >>$GITHUB_ENV
         echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
     - id: get_modules
