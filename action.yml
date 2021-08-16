@@ -128,7 +128,7 @@ runs:
     - id: build_modules
       shell: bash
       run: |
-        sudo chrootbuild -K modules -i ${{ env.KERNEL }}/*.pkg.tar.*
+        sudo chrootbuild -K modules -i ${{ env.KERNEL }}/${{ env.KERNEL }}-*.zst -i ${{ env.KERNEL }}/${{ env.KERNEL }}-headers-*.zst
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
