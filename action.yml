@@ -130,8 +130,8 @@ runs:
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
-        sudo rm "${{ env.KERNEL }}-${{ env.TAG }}*.zst" "${{ env.KERNEL }}-headers*.zst"
-        sudo zip "linux-${{ env.TAG }}-extramodules.zip" "*.zst"
+        sudo rm "./${{ env.KERNEL }}-${{ env.TAG }}*.zst" "./${{ env.KERNEL }}-headers*.zst"
+        sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=${{ env.GITHUB_LINK }}
         gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip # ${log_dir}/*
