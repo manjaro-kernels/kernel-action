@@ -130,7 +130,6 @@ runs:
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
-        ls
         sudo rm "./${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst" "./${{ env.KERNEL }}-headers-x86_64.pkg.tar.zst"
         sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst
         echo ${{ github.token }} | gh auth login --with-token
