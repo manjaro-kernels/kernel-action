@@ -9,24 +9,15 @@ runs:
       run: |
         sudo apt-get update
         sudo apt-get install \
-        asciidoc \
-        bmap-tools \
         build-essential \
         cmake \
-        dh-autoreconf \
-        docbook2x \
-        doxygen \
         fakeroot \
         git \
-        haveged \
-        kwalify \
         libarchive-dev \
         libarchive-tools \
         libcurl4-openssl-dev \
         libgpgme-dev \
         libssl-dev \
-        pkg-config \
-        systemd-container \
         zip \
         python3-pip
         sudo pip3 install meson
