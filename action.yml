@@ -109,7 +109,7 @@ runs:
         for m in $(cat ../modules.list); do
           sudo git config --global user.name="Manjaro Build Server"
           sudo git config --global user.email="build@manjaro.org"
-          sudo git clone "https://mjr-build-server:${{ secrets.GITLAB_SERVER_USER }}@gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
+          sudo git clone "https://mjr-build-server:${GITLAB_SERVER_USER}@gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
           cd $m
           echo "bump pkgrel"
           _rel=$(cat PKGBUILD | grep pkgrel= | cut -d= -f2 | head -n1)
