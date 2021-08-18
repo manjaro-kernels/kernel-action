@@ -105,7 +105,19 @@ runs:
         sudo mkdir modules
         pushd modules
         for m in $(cat ../modules.list); do
-          sudo git clone "https://gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
+          sudo git config --global user.name="Manjaro Build Server"
+          sudo git config --global user.email="build@manjaro.org"
+          sudo git clone "https://mjr-build-server:${{ secrets.GITLAB_SERVER_USER }}@gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
+          cd $m
+          echo "bump pkgrel"
+          _rel=$(cat PKGBUILD | grep pkgrel= | cut -d= -f2 | head -n1)
+          sudo sed -i -e "s/pkgrel=${_rel}/pkgrel=$((${_rel}+1))/" PKGBUILD
+          echo "commit PKGBUILD"
+          pkgver=$(grep pkgver= PKGBUILD -m1 | cut -d= -f2)
+          pkgrel=$(grep pkgrel= PKGBUILD -m1 | cut -d= -f2)
+          sudo git commit -am "[pkg-upd] $pkgver-$pkgrel"
+          sudo git push
+          cd ..
         done
         popd
     - id: build_modules
