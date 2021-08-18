@@ -99,6 +99,8 @@ runs:
         echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
     - id: get_modules
       shell: bash
+      env:
+        GITLAB_SERVER_USER: ${{ secrets.gitlab_server_user }}
       run: |
         sudo cp ${{ env.KERNEL }}/modules.list .
         sudo sed -i -e '/^#/d' modules.list
