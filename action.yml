@@ -78,11 +78,13 @@ runs:
       shell: bash
       run: |
         KERNEL=$(echo ${GITHUB_REPOSITORY} | cut -d'/' -f2)
+        sudo git clone https://gitlab.manjaro.org/packages/core/${KERNEL}.git
         echo "KERNEL=${KERNEL}" >>$GITHUB_ENV
     - id: get_modules
       shell: bash
       run: |
-        sudo wget https://gitlab.manjaro.org/packages/core/${{ env.KERNEL }}/-/blob/master/modules.list
+        sudo cp ${{ env.KERNEL }}/modules.list .
+        sudo sed -i -e '/^#/d' modules.list
         sudo mkdir modules
         pushd modules
         for m in $(cat ../modules.list); do
