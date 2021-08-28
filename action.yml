@@ -91,6 +91,7 @@ runs:
         _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _rel=$(grep ^pkgrel= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         # _tag=${_ver}-${_rel}
+        kern_ver=${_ver}-${_rel}
         _tag=modules-test
         sudo zip linux-${_tag}.zip ./*.zst
         echo ${{ github.token }} | gh auth login --with-token
@@ -98,6 +99,7 @@ runs:
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${_tag}
         gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${_tag}.zip
         echo "TAG=${_tag}" >>$GITHUB_ENV
+        echo "KERN_VER=${kern_ver}" >>$GITHUB_ENV
         echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
     - id: get_modules
       shell: bash
@@ -124,11 +126,11 @@ runs:
     - id: build_modules
       shell: bash
       run: |
-        sudo chrootbuild -K modules -i "${{ env.KERNEL }}-${{ env.TAG }}*.zst" -i "${{ env.KERNEL }}-headers*.zst"
+        sudo chrootbuild -K modules -i "${{ env.KERNEL }}-${{ env.KERN_VER }}*.zst" -i "${{ env.KERNEL }}-headers*.zst"
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
-        sudo rm "./${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst" "./${{ env.KERNEL }}-headers-${{ env.TAG }}-x86_64.pkg.tar.zst"
+        sudo rm "./${{ env.KERNEL }}-${{ env.KERN_VER }}-x86_64.pkg.tar.zst" "./${{ env.KERNEL }}-headers-${{ env.KERN_VER }}-x86_64.pkg.tar.zst"
         sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=${{ env.GITHUB_LINK }}
