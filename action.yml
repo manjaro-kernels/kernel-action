@@ -82,8 +82,7 @@ runs:
     - id: get_modules
       shell: bash
       run: |
-        sudo cp ${{ env.KERNEL }}/modules.list .
-        sudo sed -i -e '/^#/d' modules.list
+        sudo wget https://gitlab.manjaro.org/packages/core/${{ env.KERNEL }}/-/blob/master/modules.list
         sudo mkdir modules
         pushd modules
         for m in $(cat ../modules.list); do
