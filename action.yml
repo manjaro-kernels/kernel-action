@@ -19,7 +19,8 @@ runs:
         libgpgme-dev \
         libssl-dev \
         zip \
-        python3-pip
+        python3-pip \
+        python3-babel
         sudo pip3 install meson
         sudo pip3 install ninja
     - id: install_pacman
