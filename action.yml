@@ -110,7 +110,7 @@ runs:
           sudo git clone "https://gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
           _m=$m
           [[ $m == "spl_zfs" ]] && _m=zfs
-          [[ $m == "virtualbox" ]] && _m=virtualbox-host-modules
+          [[ $m == "virtualbox-modules" ]] && _m=virtualbox-host-modules
           _rel=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | cut -d- -f2)
           if [[ $_rel == 0.* ]]; then
             _rel=${_rel#*.}
