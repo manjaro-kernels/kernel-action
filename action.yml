@@ -105,11 +105,12 @@ runs:
         sudo sed -i -e '/^#/d' modules.list
         sudo mkdir modules
         pushd modules
-        sudo pacman-mirrors -c Germany
+        sudo pacman-mirrors -f 5
         for m in $(cat ../modules.list); do
           sudo git clone "https://gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
-          [[ $m == "spl_zfs" ]] && m=zfs
-          [[ $m == "virtualbox" ]] && m=virtualbox-host-modules
+          _m=$m
+          [[ $m == "spl_zfs" ]] && _m=zfs
+          [[ $m == "virtualbox" ]] && _m=virtualbox-host-modules
           _rel=$(sudo pacman -Syi ${{ env.KERNEL }}-$m | grep Version | cut -d- -f2)
           if [[ $_rel == 0.* ]]; then
             _rel=${_rel#*.}
