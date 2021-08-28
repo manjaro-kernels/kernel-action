@@ -71,6 +71,8 @@ runs:
       shell: bash
       run: |
         sudo git clone https://gitlab.manjaro.org/packages/core/pacman-mirrors.git
+        pushd pacman-mirrors
+        sudo git clone https://gitlab.manjaro.org/applications/pacman-mirrors.git
         cd pacman-mirrors
         sudo sed -i 's/python setup/python3 setup/g' Makefile
         sudo make clean
@@ -80,7 +82,8 @@ runs:
         sudo install -D pacman-mirrors-install.script /usr/share/libalpm/scripts/pacman-mirrors-install
         sudo install -D pacman-mirrors-upgrade.script /usr/share/libalpm/scripts/pacman-mirrors-upgrade
         sudo install -Dm644 pacman-mirrors-install.hook /usr/share/libalpm/hooks/pacman-mirrors-install.hook
-        sudo install -Dm644 pacman-mirrors-upgrade.hook /usr/share/libalpm/hooks/pacman-mirrors-upgrade.hook
+        sudo install -Dm644 pacman-mirrors-upgrade.hook /usr/share/libalpm/hooks/pacman-mirrors-upgrade.hook#
+        popd
     - id: install_manjaro-chrootbuild
       shell: bash
       run: |
