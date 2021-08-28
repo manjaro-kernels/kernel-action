@@ -67,6 +67,20 @@ runs:
         popd
         sudo pacman-key --init
         sudo pacman-key --populate archlinux manjaro
+    - id: install_pacman-mirrors
+      shell: bash
+      run: |
+        sudo git clone https://gitlab.manjaro.org/packages/core/pacman-mirrors.git
+        cd pacman-mirrors
+        sudo sed -i 's/python setup/python3 setup/g' Makefile
+        sudo make clean
+        sudo make mo-files
+        sudo python3 setup.py install --optimize=1
+        cd ..
+        sudo install -D pacman-mirrors-install.script /usr/share/libalpm/scripts/pacman-mirrors-install
+        sudo install -D pacman-mirrors-upgrade.script /usr/share/libalpm/scripts/pacman-mirrors-upgrade
+        sudo install -Dm644 pacman-mirrors-install.hook /usr/share/libalpm/hooks/pacman-mirrors-install.hook
+        sudo install -Dm644 pacman-mirrors-upgrade.hook /usr/share/libalpm/hooks/pacman-mirrors-upgrade.hook
     - id: install_manjaro-chrootbuild
       shell: bash
       run: |
