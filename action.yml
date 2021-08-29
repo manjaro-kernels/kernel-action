@@ -90,8 +90,7 @@ runs:
       run: |
         _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _rel=$(grep ^pkgrel= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
-        # _tag=${_ver}-${_rel}
-        _tag=modules-test
+        _tag=${_ver}-${_rel}
         sudo zip linux-${_tag}.zip ./*.zst
         echo ${{ github.token }} | gh auth login --with-token
         gh release create ${_tag} --title ${_tag} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
