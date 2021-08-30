@@ -111,7 +111,8 @@ runs:
           _m=$m
           [[ $m == "spl_zfs" ]] && _m=zfs
           [[ $m == "virtualbox-modules" ]] && _m=virtualbox-host-modules
-          _rel=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | cut -d- -f2)
+          repover=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | rev | cut -d' ' -f1 | rev)
+          _rel=$(echo $repover | cut -d- -f2)
           if [[ $_rel == 0.* ]]; then
             if [[ ! ${{ env.TAG }} == *rc* ]]; then
               sudo sed -i -e "/^pkgrel/c\pkgrel=1" $m/PKGBUILD
@@ -122,6 +123,9 @@ runs:
           else
             sudo sed -i -e "/^pkgrel/c\pkgrel=$((${_rel}+1))" $m/PKGBUILD
           fi
+          _ver=$(echo $repover | cut -d- -f1)
+          _gitver=$(grep ^pkgver $m/PKGBUILD | cut -d= -f2)
+          [[ $(vercmp $_gitver $_ver) ]] && sed -i -e "/^pkgrel/c\pkgrel=1" $m/PKGBUILD
         done
         popd
     - id: build_modules
