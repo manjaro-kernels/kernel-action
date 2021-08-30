@@ -125,7 +125,7 @@ runs:
           fi
           _ver=$(echo $repover | cut -d- -f1)
           _gitver=$(grep ^pkgver $m/PKGBUILD | cut -d= -f2)
-          [[ $(vercmp $_gitver $_ver) ]] && sudo sed -i -e "/^pkgrel/c\pkgrel=1" $m/PKGBUILD
+          [[ $(vercmp $_gitver $_ver) == 1 ]] && sudo sed -i -e "/^pkgrel/c\pkgrel=1" $m/PKGBUILD
         done
         popd
     - id: build_modules
