@@ -113,10 +113,14 @@ runs:
           [[ $m == "virtualbox-modules" ]] && _m=virtualbox-host-modules
           _rel=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | cut -d- -f2)
           if [[ $_rel == 0.* ]]; then
-            _rel=${_rel#*.}
-            sudo sed -i -e "s/pkgrel=0.${_rel}/pkgrel=0.$((${_rel}+1))/" $m/PKGBUILD
+            if [[ ! ${{ env.TAG }} == *rc* ]]; then
+              sudo sed -i -e "/^pkgrel/c\pkgrel=1" $m/PKGBUILD
+            else
+              _rel=${_rel#*.}
+              sudo sed -i -e "/^pkgrel/c\pkgrel=0.$((${_rel}+1))" $m/PKGBUILD
+            fi
           else
-            sudo sed -i -e "s/pkgrel=${_rel}/pkgrel=$((${_rel}+1))/" $m/PKGBUILD
+            sudo sed -i -e "/^pkgrel/c\pkgrel=$((${_rel}+1))" $m/PKGBUILD
           fi
         done
         popd
