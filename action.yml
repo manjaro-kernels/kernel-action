@@ -121,21 +121,21 @@ runs:
           cd $m
           if [[ $_rel == 0.* ]]; then
             if [[ ! ${{ env.TAG }} == *rc* ]]; then
-              sudo sed -i -e "/^pkgrel/c\pkgrel=1" PKGBUILD
+              sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
             else
               _rel=${_rel#*.}
-              sudo sed -i -e "/^pkgrel/c\pkgrel=0.$((${_rel}+1))" PKGBUILD
+              sudo sed -i -e "/^pkgrel=/c\pkgrel=0.$((${_rel}+1))" PKGBUILD
             fi
           else
-            sudo sed -i -e "/^pkgrel/c\pkgrel=$((${_rel}+1))" PKGBUILD
+            sudo sed -i -e "/^pkgrel=/c\pkgrel=$((${_rel}+1))" PKGBUILD
           fi
           _ver=$(echo $repover | cut -d- -f1)
-          _gitver=$(grep ^pkgver PKGBUILD | cut -d= -f2)
-          [[ $(vercmp $_gitver $_ver) == 1 ]] && sudo sed -i -e "/^pkgrel/c\pkgrel=1" PKGBUILD
+          _gitver=$(grep ^pkgver= PKGBUILD | cut -d= -f2)
+          [[ $(vercmp $_gitver $_ver) == 1 ]] && sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
           sudo git config --global user.name "Manjaro Build Server"
           sudo git config --global user.email "build@manjaro.org"
           sudo git add PKGBUILD
-          sudo git commit -m"${_gitver}-$(grep ^pkgrel | cut -d= -f2)"
+          sudo git commit -m"${_gitver}-$(grep ^pkgrel= | cut -d= -f2)"
           sudo git push
           cd ..
         done
