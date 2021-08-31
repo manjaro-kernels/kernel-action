@@ -118,19 +118,23 @@ runs:
           [[ $m == "virtualbox-modules" ]] && _m=virtualbox-host-modules
           repover=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | rev | cut -d' ' -f1 | rev)
           _rel=$(echo $repover | cut -d- -f2)
+          cd $m
           if [[ $_rel == 0.* ]]; then
             if [[ ! ${{ env.TAG }} == *rc* ]]; then
-              sudo sed -i -e "/^pkgrel/c\pkgrel=1" $m/PKGBUILD
+              sudo sed -i -e "/^pkgrel/c\pkgrel=1" PKGBUILD
             else
               _rel=${_rel#*.}
-              sudo sed -i -e "/^pkgrel/c\pkgrel=0.$((${_rel}+1))" $m/PKGBUILD
+              sudo sed -i -e "/^pkgrel/c\pkgrel=0.$((${_rel}+1))" PKGBUILD
             fi
           else
-            sudo sed -i -e "/^pkgrel/c\pkgrel=$((${_rel}+1))" $m/PKGBUILD
+            sudo sed -i -e "/^pkgrel/c\pkgrel=$((${_rel}+1))" PKGBUILD
           fi
           _ver=$(echo $repover | cut -d- -f1)
-          _gitver=$(grep ^pkgver $m/PKGBUILD | cut -d= -f2)
-          [[ $(vercmp $_gitver $_ver) == 1 ]] && sudo sed -i -e "/^pkgrel/c\pkgrel=1" $m/PKGBUILD
+          _gitver=$(grep ^pkgver PKGBUILD | cut -d= -f2)
+          [[ $(vercmp $_gitver $_ver) == 1 ]] && sudo sed -i -e "/^pkgrel/c\pkgrel=1" PKGBUILD
+          sudo git add PKGBUILD
+          git git commit -m"${_gitver}-$(grep ^pkgrel | cut -d= -f2)"
+          git push
         done
         popd
     - id: build_modules
