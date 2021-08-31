@@ -132,9 +132,12 @@ runs:
           _ver=$(echo $repover | cut -d- -f1)
           _gitver=$(grep ^pkgver PKGBUILD | cut -d= -f2)
           [[ $(vercmp $_gitver $_ver) == 1 ]] && sudo sed -i -e "/^pkgrel/c\pkgrel=1" PKGBUILD
+          sudo git config --global user.name "Manjaro Build Server"
+          sudo git config --global user.email "build@manjaro.org"
           sudo git add PKGBUILD
-          git git commit -m"${_gitver}-$(grep ^pkgrel | cut -d= -f2)"
-          git push
+          sudo git commit -m"${_gitver}-$(grep ^pkgrel | cut -d= -f2)"
+          sudo git push
+          cd ..
         done
         popd
     - id: build_modules
