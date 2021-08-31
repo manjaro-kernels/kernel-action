@@ -2,6 +2,11 @@
 name: 'Manjaro Kernel Action'
 description: 'Builds Manjaro Kernels'
 
+inputs:
+  gitlab-pw:
+    description: 'gitlab password'
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -107,7 +112,7 @@ runs:
         pushd modules
         sudo cp /var/lib/chrootbuild/etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist
         for m in $(cat ../modules.list); do
-          sudo git clone "https://gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
+          sudo git clone "https://mjr-build-server:${{ inputs.gitlab-pw }}@gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
           _m=$m
           [[ $m == "spl_zfs" ]] && _m=zfs
           [[ $m == "virtualbox-modules" ]] && _m=virtualbox-host-modules
