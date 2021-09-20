@@ -57,6 +57,12 @@ runs:
         sudo install -m644 makepkg.conf /etc/
         sudo mkdir -p /etc/pacman.d
         echo 'Server = https://repo.manjaro.org/repo/unstable/$repo/$arch' | sudo tee /etc/pacman.d/mirrorlist
+        # install updpkgsums
+        sudo wget https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/src/updpkgsums.sh.in
+        sudo wget https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/configure.ac
+        contrib_ver=$(grep AC_INIT configure.ac | cut -d[ -f3 | cut -d] -f1)
+        sudo sed -i -e "s/@PACKAGE_VERSION@/${contrib_ver}/; s/@libmakepkgdir@/\/usr\/share\/makepkg/" updpkgsums.sh.in
+        sudo install -m755 updpkgsums.sh.in /usr/bin/updpkgsums
         popd
     - id: install_keyrings
       shell: bash
