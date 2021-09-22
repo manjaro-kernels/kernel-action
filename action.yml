@@ -107,6 +107,7 @@ runs:
           ver_min=$(echo ${repover} | cut -d. -f3)
           ver_new=${ver_maj}.$((${ver_min}+1))
           sudo sed -i -e "/^pkgver=/c\pkgver=${ver_new}" PKGBUILD
+          sudo sed -i -e "/^pkgrel=/c\pkgver=1" PKGBUILD
           echo "update PKGBUILD"
           updpkgsums
           sudo git add PKGBUILD
