@@ -6,6 +6,10 @@ inputs:
   gitlab-pw:
     description: 'gitlab password'
     required: true
+  bump-kernel:
+    description: 'get kernel repo version and buld higher dot release'
+    required: false
+    default: false
 
 runs:
   using: "composite"
@@ -31,7 +35,7 @@ runs:
     - id: install_pacman
       shell: bash
       env:
-        PACMAN_VERSION: 6.0.0
+        PACMAN_VERSION: 6.0.1
       run: |
         sudo git clone --depth 1 https://gitlab.manjaro.org/packages/core/pacman.git
         pushd pacman
@@ -52,7 +56,13 @@ runs:
         sudo install -m644 pacman.conf /etc/pacman.conf
         sudo install -m644 makepkg.conf /etc/
         sudo mkdir -p /etc/pacman.d
-        sudo touch /etc/pacman.d/mirrorlist
+        echo 'Server = https://repo.manjaro.org/repo/unstable/$repo/$arch' | sudo tee /etc/pacman.d/mirrorlist
+        # install updpkgsums
+        sudo wget https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/src/updpkgsums.sh.in
+        sudo wget https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/configure.ac
+        contrib_ver=$(grep AC_INIT configure.ac | cut -d[ -f3 | cut -d] -f1)
+        sudo sed -i -e "s/@PACKAGE_VERSION@/${contrib_ver}/; s/@libmakepkgdir@/\/usr\/share\/makepkg/" updpkgsums.sh.in
+        sudo install -m755 updpkgsums.sh.in /usr/bin/updpkgsums
         popd
     - id: install_keyrings
       shell: bash
@@ -78,14 +88,32 @@ runs:
       run: |
         sudo git clone --depth 1 https://gitlab.manjaro.org/tools/development-tools/manjaro-chrootbuild
         pushd manjaro-chrootbuild
-        sudo ./install.sh "PACKAGER = Manjaro Build Server <build@manjaro.org>"
+        sudo ./install.sh
+        echo 'PACKAGER="Manjaro Build Server <build@manjaro.org>"' | sudo tee -a /etc/makepkg.conf > /dev/null
         popd
     - id: clone_repo
       shell: bash
       run: |
         KERNEL=$(echo ${GITHUB_REPOSITORY} | cut -d'/' -f2)
-        sudo git clone https://gitlab.manjaro.org/packages/core/${KERNEL}.git
+        sudo git clone https://mjr-build-server:${{ inputs.gitlab-pw }}@gitlab.manjaro.org/packages/core/${KERNEL}.git
+        sudo git config --global user.name "Manjaro Build Server"
+        sudo git config --global user.email "build@manjaro.org"
         echo "KERNEL=${KERNEL}" >>$GITHUB_ENV
+        if [[ "${{ inputs.bump-kernel }}" == "true" ]]; then
+          sudo chown -R ${UID}:${UID} ${KERNEL}
+          cd ${KERNEL}
+          repover=$(sudo pacman -Syi ${KERNEL} | grep Version | rev | cut -d' ' -f1 | rev | cut -d- -f1)
+          ver_maj=$(printf "%s.%s" "$(echo ${repover} | cut -d. -f1)" "$(echo ${repover} | cut -d. -f2)")
+          ver_min=$(echo ${repover} | cut -d. -f3)
+          ver_new=${ver_maj}.$((${ver_min}+1))
+          sudo sed -i -e "/^pkgver=/c\pkgver=${ver_new}" PKGBUILD
+          echo "update PKGBUILD"
+          updpkgsums
+          sudo git add PKGBUILD
+          sudo git commit -m"${ver_new}"
+          sudo git push
+          cd ..
+        fi
     - name: build_kernel
       shell: bash
       run: |
@@ -110,7 +138,6 @@ runs:
         sudo sed -i -e '/^#/d' modules.list
         sudo mkdir modules
         pushd modules
-        sudo cp /var/lib/chrootbuild/etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist
         for m in $(cat ../modules.list); do
           sudo git clone "https://mjr-build-server:${{ inputs.gitlab-pw }}@gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
           _m=$m
@@ -132,8 +159,6 @@ runs:
           _ver=$(echo $repover | cut -d- -f1)
           _gitver=$(grep ^pkgver= PKGBUILD | cut -d= -f2)
           [[ $(vercmp $_gitver $_ver) == 1 ]] && sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
-          sudo git config --global user.name "Manjaro Build Server"
-          sudo git config --global user.email "build@manjaro.org"
           sudo git add PKGBUILD
           sudo git commit -m"${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
           sudo git push
