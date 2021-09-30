@@ -30,9 +30,6 @@ runs:
         zip \
         python3-pip
         sudo pip3 install meson
-        sudo pip3 install ninja
-        sudo locale-gen en_US.UTF-8
-        sudo update-locale LANG=en_US.UTF-8
     - id: install_pacman
       shell: bash
       env:
