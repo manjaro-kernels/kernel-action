@@ -15,6 +15,15 @@ inputs:
   gpg-passphrase:
     description: 'passphrase for gpg key'
     required: false
+  boxit-host:
+    description: 'boxit login address'
+    required: false
+  boxit-target:
+    description: 'boxit rsync target'
+    required: false
+  ssh-key:
+    description: 'boxit user ssh private key'
+    required: false
 
 runs:
   using: "composite"
@@ -141,6 +150,21 @@ runs:
         gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${_tag}.zip
         echo "TAG=${_tag}" >>$GITHUB_ENV
         echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
+    - name: create kernel btf
+      shell: bash -O extglob {0}
+      run: |
+        source ${{ env.KERNEL }}/PKGBUILD
+        for p in ${pkgname[@]}; do
+          name=$(find . -name ${p}-${{ env.TAG }}*.zst)
+          arch=$(echo ${name} | rev | cut -d- -f1 | rev | cut -d. -f1)
+          file=${p}-${{ env.TAG }}-${arch}
+          btf=${file}.yml
+          echo "sha256_pkg: $(sha256sum ${p}*.zst | cut -d' ' -f1)" > ${btf}
+          echo "sha256_sig: $(sha256sum ${p}*.sig | cut -d' ' -f1)" >> ${btf}
+          echo "repository: core" >> ${btf}
+          echo "branch: unstable" >> ${btf}
+          tar -czvf ${file}.tar ./${file}*.zst ./${file}*.sig ./${btf}
+        done
     - id: get_modules
       shell: bash
       run: |
@@ -191,3 +215,41 @@ runs:
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=${{ env.GITHUB_LINK }}
         gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip ./linux-${{ env.TAG }}-logs.zip
+    - name: create modules btf
+      shell: bash -O extglob {0}
+      run: |
+        for m in ${cat modules.list}; do
+          source ${m}/PKGBUILD
+          m_ver=${pkgver}-${pkgrel}
+          for p in ${pkgname[@]}; do
+            name=$(find . -name ${p}-${m_ver}*.zst)
+            arch=$(echo ${name} | rev | cut -d- -f1 | rev | cut -d. -f1)
+            file=${p}-${m_ver}-${arch}
+            btf=${file}.yml
+            echo "sha256_pkg: $(sha256sum ${p}*.zst | cut -d' ' -f1)" > ${btf}
+            echo "sha256_sig: $(sha256sum ${p}*.sig | cut -d' ' -f1)" >> ${btf}
+            echo "repository: extra" >> ${btf}
+            echo "branch: unstable" >> ${btf}
+            tar -czvf ${file}.tar ./${file}*.zst ./${file}*.sig ./${btf}
+          done
+        done
+    - name: prepare ssh
+      shell: bash
+      run: |
+        mkdir -p /home/runner/.ssh
+        touch /home/runner/.ssh/github_actions
+        chmod 600 /home/runner/.ssh/github_actions
+        ssh-agent -a /tmp/ssh_agent.sock > /dev/null
+    - name: push to boxit
+      shell: bash -O extglob {0}
+      env:
+        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      run: |
+        if [ -z "${{ inputs.boxit-host }}" ] || [ -z "${{ inputs.boxit-target }}" ] || [ -z "${{ inputs.ssh-key }}" ]; then 
+          echo "## not all credentials given for boxit push"
+          exit 0
+        fi
+        ssh-keyscan -t rsa ${{ inputs.boxit-host }} >> /home/runner/.ssh/known_hosts
+        echo "${{ inputs.ssh-key }}" >> /home/runner/.ssh/github_actions
+        ssh-add /home/runner/.ssh/github_actions
+        rsync -vaPzz --stats -e ssh ./*tar ${{ inputs.boxit-target }}
