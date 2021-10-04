@@ -9,6 +9,12 @@ inputs:
     description: 'get kernel repo version and buld higher dot release'
     required: false
     default: false
+  gpg-key:
+    description: 'base64 encoded gpg secret key'
+    required: false
+  gpg-passphrase:
+    description: 'passphrase for gpg key'
+    required: false
 
 runs:
   using: "composite"
@@ -118,13 +124,17 @@ runs:
       shell: bash
       run: |
         sudo chrootbuild -p ${{ env.KERNEL }}
+        cat <(echo -e "${{ inputs.gpg-key }}" | base64 --decode) | gpg --batch --import &>/dev/null
+          for p in $(find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)'); do
+            gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg-passphrase }}" --detach-sign ${p}
+          done
     - id: publish_kernel
       shell: bash -O extglob {0}
       run: |
         _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _rel=$(grep ^pkgrel= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _tag=${_ver}-${_rel}
-        sudo zip linux-${_tag}.zip ./*.zst
+        sudo zip linux-${_tag}.zip ./*.zst ./*sig
         echo ${{ github.token }} | gh auth login --with-token
         gh release create ${_tag} --title ${_tag} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${_tag}
@@ -169,11 +179,14 @@ runs:
       shell: bash
       run: |
         sudo chrootbuild -K modules -i "${{ env.KERNEL }}-${{ env.TAG }}*.zst" -i "${{ env.KERNEL }}-headers*.zst"
+        for p in $(find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)'); do
+          gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg-passphrase }}" --detach-sign ${p}
+        done
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
         sudo rm "./${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst" "./${{ env.KERNEL }}-headers-${{ env.TAG }}-x86_64.pkg.tar.zst"
-        sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst
+        sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst ./*.sig
         sudo zip "linux-${{ env.TAG }}-logs.zip" /home/runner/.chrootbuild-logs/*
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=${{ env.GITHUB_LINK }}
