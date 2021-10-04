@@ -12,7 +12,7 @@ inputs:
   bump-modules:
     description: 'bump modules pkgrel in PKGBUILD'
     required: false
-    default: false
+    default: true
   gpg-key:
     description: 'base64 encoded gpg secret key'
     required: false
