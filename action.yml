@@ -135,7 +135,7 @@ runs:
         gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${_tag}.zip
         echo "TAG=${_tag}" >>$GITHUB_ENV
         echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
-    . name: get modules
+    - name: get modules
       shell: bash
       run: |
         sudo cp ${{ env.KERNEL }}/modules.list .
