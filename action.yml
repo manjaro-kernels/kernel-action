@@ -179,7 +179,7 @@ runs:
           echo "sha256_pkg: $(sha256sum ${p}*.zst | cut -d' ' -f1)" > ${btf}
           echo "sha256_sig: $(sha256sum ${p}*.sig | cut -d' ' -f1)" >> ${btf}
           echo "repository: core" >> ${btf}
-          echo "branch: unstable" >> ${btf}
+          echo "branch: ${{ inputs.branch }}" >> ${btf}
           tar -czvf ${file}.tar ./${file}*.zst ./${file}*.sig ./${btf}
         done
     - name: get modules
