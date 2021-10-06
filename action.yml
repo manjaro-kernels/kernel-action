@@ -243,7 +243,7 @@ runs:
       shell: bash -O extglob {0}
       run: |
         for m in $(cat modules.list); do
-          source ${m}/PKGBUILD
+          source modules/${m}/PKGBUILD
           m_ver=${pkgver}-${pkgrel}
           for p in ${pkgname[@]}; do
             name=$(find . -name ${p}-${m_ver}*.zst)
