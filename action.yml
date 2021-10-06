@@ -5,6 +5,14 @@ inputs:
   gitlab-pw:
     description: 'gitlab password'
     required: true
+  build-mirror:
+    description: 'pacman-mirror to be used by manjaro-chrootbuild'
+    required: false
+    default: 'https://mirrors.manjaro.org/repo'
+  branch:
+    description: 'branch to build against'
+    required: false
+    default: "unstable"
   bump-kernel:
     description: 'get kernel repo version and buld higher dot release'
     required: false
@@ -13,6 +21,21 @@ inputs:
     description: 'bump modules pkgrel in PKGBUILD'
     required: false
     default: false
+  gpg-key:
+    description: 'base64 encoded gpg secret key'
+    required: true
+  gpg-passphrase:
+    description: 'passphrase for gpg key'
+    required: true
+  boxit-host:
+    description: 'boxit login address'
+    required: false
+  boxit-target:
+    description: 'boxit rsync target'
+    required: false
+  ssh-key:
+    description: 'boxit user ssh private key'
+    required: false
 
 runs:
   using: "composite"
@@ -59,7 +82,7 @@ runs:
         sudo install -m644 pacman.conf /etc/pacman.conf
         sudo install -m644 makepkg.conf /etc/
         sudo mkdir -p /etc/pacman.d
-        echo 'Server = https://repo.manjaro.org/repo/unstable/$repo/$arch' | sudo tee /etc/pacman.d/mirrorlist
+        echo "Server = ${{ inputs.build-mirror }}/${{ inputs.branch }}/\$repo/\$arch" | sudo tee /etc/pacman.d/mirrorlist
         # install updpkgsums
         sudo wget https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/src/updpkgsums.sh.in
         sudo wget https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/configure.ac
@@ -121,20 +144,44 @@ runs:
     - name: build_kernel
       shell: bash
       run: |
-        sudo chrootbuild -p ${{ env.KERNEL }}
+        sudo chrootbuild -p ${{ env.KERNEL }} -b ${{ inputs.branch }}
+        if [ -z "${{ inputs.gpg-key }}" ] || [ -z "${{ inputs.gpg-passphrase }}" ]; then
+          echo "## gpg credentials not provided. Skip signing."
+        else
+          cat <(echo -e "${{ inputs.gpg-key }}" | base64 --decode) | gpg --batch --import &>/dev/null
+          for p in $(find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)'); do
+            echo "## signing $p"
+            gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg-passphrase }}" --detach-sign ${p}
+          done
+        fi
     - id: publish_kernel
       shell: bash -O extglob {0}
       run: |
         _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _rel=$(grep ^pkgrel= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
         _tag=${_ver}-${_rel}
-        sudo zip linux-${_tag}.zip ./*.zst
+        sudo zip linux-${_tag}.zip ./*.zst ./*sig
         echo ${{ github.token }} | gh auth login --with-token
         gh release create ${_tag} --title ${_tag} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
         GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${_tag}
         gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${_tag}.zip
         echo "TAG=${_tag}" >>$GITHUB_ENV
         echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
+    - name: create kernel btf
+      shell: bash -O extglob {0}
+      run: |
+        source ${{ env.KERNEL }}/PKGBUILD
+        for p in ${pkgname[@]}; do
+          name=$(find . -name ${p}-${{ env.TAG }}*.zst)
+          arch=$(echo ${name} | rev | cut -d- -f1 | rev | cut -d. -f1)
+          file=${p}-${{ env.TAG }}-${arch}
+          btf=${file}.yml
+          echo "sha256_pkg: $(sha256sum ${p}*.zst | cut -d' ' -f1)" > ${btf}
+          echo "sha256_sig: $(sha256sum ${p}*.sig | cut -d' ' -f1)" >> ${btf}
+          echo "repository: core" >> ${btf}
+          echo "branch: unstable" >> ${btf}
+          tar -czvf ${file}.tar ./${file}*.zst ./${file}*.sig ./${btf}
+        done
     - name: get modules
       shell: bash
       run: |
@@ -168,19 +215,65 @@ runs:
             sudo git commit -m"${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
             sudo git push
             cd ..
-          done
+          fi
         done
         popd
     - id: build_modules
       shell: bash
       run: |
-        sudo chrootbuild -K modules -i "${{ env.KERNEL }}-${{ env.TAG }}*.zst" -i "${{ env.KERNEL }}-headers*.zst"
+        sudo chrootbuild -K modules -i "${{ env.KERNEL }}-${{ env.TAG }}*.zst" -i "${{ env.KERNEL }}-headers*.zst" -b ${{ inputs.branch }}
+        sudo rm "./${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst" "./${{ env.KERNEL }}-headers-${{ env.TAG }}-x86_64.pkg.tar.zst"
+        if [ -z "${{ inputs.gpg-key }}" ] || [ -z "${{ inputs.gpg-passphrase }}" ]; then 
+          echo "## gpg credentials not provided. Skip signing."
+        else
+          for p in $(find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)'); do
+            echo "## signing $p"
+            gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg-passphrase }}" --detach-sign ${p}
+          done
+        fi
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
-        sudo rm "./${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst" "./${{ env.KERNEL }}-headers-${{ env.TAG }}-x86_64.pkg.tar.zst"
-        sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst
+        sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst ./*.sig
         sudo zip "linux-${{ env.TAG }}-logs.zip" /home/runner/.chrootbuild-logs/*
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=${{ env.GITHUB_LINK }}
         gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip ./linux-${{ env.TAG }}-logs.zip
+    - name: create modules btf
+      shell: bash -O extglob {0}
+      run: |
+        for m in $(cat modules.list); do
+          source ${m}/PKGBUILD
+          m_ver=${pkgver}-${pkgrel}
+          for p in ${pkgname[@]}; do
+            name=$(find . -name ${p}-${m_ver}*.zst)
+            arch=$(echo ${name} | rev | cut -d- -f1 | rev | cut -d. -f1)
+            file=${p}-${m_ver}-${arch}
+            btf=${file}.yml
+            echo "sha256_pkg: $(sha256sum ${p}*.zst | cut -d' ' -f1)" > ${btf}
+            echo "sha256_sig: $(sha256sum ${p}*.sig | cut -d' ' -f1)" >> ${btf}
+            echo "repository: extra" >> ${btf}
+            echo "branch: unstable" >> ${btf}
+            tar -czvf ${file}.tar ./${file}*.zst ./${file}*.sig ./${btf}
+          done
+        done
+    - name: prepare ssh
+      shell: bash
+      run: |
+        mkdir -p /home/runner/.ssh
+        touch /home/runner/.ssh/github_actions
+        chmod 600 /home/runner/.ssh/github_actions
+        ssh-agent -a /tmp/ssh_agent.sock > /dev/null
+    - name: push to boxit
+      shell: bash -O extglob {0}
+      env:
+        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      run: |
+        if [ -z "${{ inputs.boxit-host }}" ] || [ -z "${{ inputs.boxit-target }}" ] || [ -z "${{ inputs.ssh-key }}" ]; then 
+          echo "## not all credentials given for boxit push"
+          exit 0
+        fi
+        ssh-keyscan -t rsa ${{ inputs.boxit-host }} >> /home/runner/.ssh/known_hosts
+        echo "${{ inputs.ssh-key }}" >> /home/runner/.ssh/github_actions
+        ssh-add /home/runner/.ssh/github_actions
+        rsync -vaPzz --stats -e ssh ./*tar ${{ inputs.boxit-target }}
