@@ -222,7 +222,7 @@ runs:
       shell: bash
       run: |
         sudo chrootbuild -K modules -i "${{ env.KERNEL }}-${{ env.TAG }}*.zst" -i "${{ env.KERNEL }}-headers*.zst" -b ${{ inputs.branch }}
-        sudo rm "./${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig}" "./${{ env.KERNEL }}-headers-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig}"
+        sudo rm ./${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig} ./${{ env.KERNEL }}-headers-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig}
         if [ -z "${{ inputs.gpg-key }}" ] || [ -z "${{ inputs.gpg-passphrase }}" ]; then 
           echo "## gpg credentials not provided. Skip signing."
         else
