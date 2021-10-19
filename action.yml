@@ -238,7 +238,7 @@ runs:
         sudo zip "linux-${{ env.TAG }}-logs.zip" /home/runner/.chrootbuild-logs/*
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=${{ env.GITHUB_LINK }}
-        gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip ./linux-${{ env.TAG }}-logs.zip
+        gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip ./linux-${{ env.TAG }}-logs.zip ./*.tar
     - name: create modules btf
       shell: bash -O extglob {0}
       run: |
