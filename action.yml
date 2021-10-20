@@ -231,14 +231,6 @@ runs:
             gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg-passphrase }}" --detach-sign ${p}
           done
         fi
-    - id: publish_modules
-      shell: bash -O extglob {0}
-      run: |
-        sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst ./*.sig
-        sudo zip "linux-${{ env.TAG }}-logs.zip" /home/runner/.chrootbuild-logs/*
-        echo ${{ github.token }} | gh auth login --with-token
-        GITHUB_LINK=${{ env.GITHUB_LINK }}
-        gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip ./linux-${{ env.TAG }}-logs.zip ./*.tar
     - name: create modules btf
       shell: bash -O extglob {0}
       run: |
@@ -257,6 +249,14 @@ runs:
             tar -czvf ${file}.tar ./${file}*.zst ./${file}*.sig ./${btf}
           done
         done
+    - id: publish_modules
+      shell: bash -O extglob {0}
+      run: |
+        sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst ./*.sig
+        sudo zip "linux-${{ env.TAG }}-logs.zip" /home/runner/.chrootbuild-logs/*
+        echo ${{ github.token }} | gh auth login --with-token
+        GITHUB_LINK=${{ env.GITHUB_LINK }}
+        gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip ./linux-${{ env.TAG }}-logs.zip ./*.tar
     - name: prepare ssh
       shell: bash
       run: |
