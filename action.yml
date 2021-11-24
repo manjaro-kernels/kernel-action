@@ -157,8 +157,9 @@ runs:
     - id: publish_kernel
       shell: bash -O extglob {0}
       run: |
-        _ver=$(grep ^pkgver= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
-        _rel=$(grep ^pkgrel= ${{ env.KERNEL }}/PKGBUILD | cut -d'=' -f2)
+        _chrpkb=/var/lib/chrootbuild/build/${{ env.KERNEL }}/PKGBUILD
+        _ver=$(grep ^pkgver= ${_chrpkb} | cut -d'=' -f2)
+        _rel=$(grep ^pkgrel= ${_chrpkb} | cut -d'=' -f2)
         _tag=${_ver}-${_rel}
         sudo zip linux-${_tag}.zip ./*.zst ./*sig
         echo ${{ github.token }} | gh auth login --with-token
