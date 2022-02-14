@@ -181,8 +181,8 @@ runs:
           arch=$(echo ${name} | rev | cut -d- -f1 | rev | cut -d. -f1)
           file=${p}-${{ env.TAG }}-${arch}
           btf=${file}.yml
-          echo "sha256_pkg: $(sha256sum ${p}*.zst | cut -d' ' -f1)" > ${btf}
-          echo "sha256_sig: $(sha256sum ${p}*.sig | cut -d' ' -f1)" >> ${btf}
+          echo "sha256_pkg: $(sha256sum ${name} | cut -d' ' -f1)" > ${btf}
+          echo "sha256_sig: $(sha256sum ${name}.sig | cut -d' ' -f1)" >> ${btf}
           echo "repository: core" >> ${btf}
           echo "branch: ${{ inputs.branch }}" >> ${btf}
           tar -czvf ${file}.tar ./${file}*.zst ./${file}*.sig ./${btf}
@@ -248,8 +248,8 @@ runs:
               arch=$(echo ${name} | rev | cut -d- -f1 | rev | cut -d. -f1)
               file=${p}-${m_ver}-${arch}
               btf=${file}.yml
-              echo "sha256_pkg: $(sha256sum ${p}*.zst | cut -d' ' -f1)" > ${btf}
-              echo "sha256_sig: $(sha256sum ${p}*.sig | cut -d' ' -f1)" >> ${btf}
+              echo "sha256_pkg: $(sha256sum ${name} | cut -d' ' -f1)" > ${btf}
+              echo "sha256_sig: $(sha256sum ${name}.sig | cut -d' ' -f1)" >> ${btf}
               echo "repository: extra" >> ${btf}
               echo "branch: ${{ inputs.branch }}" >> ${btf}
               tar -czvf ${file}.tar ./${file}*.zst ./${file}*.sig ./${btf}
