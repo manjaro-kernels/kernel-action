@@ -202,23 +202,27 @@ runs:
             [[ $m == "virtualbox-modules" ]] && _m=virtualbox-host-modules
             repover=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | rev | cut -d' ' -f1 | rev)
             _rel=$(echo $repover | cut -d- -f2)
+            _gitrel=$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)
             cd $m
             if [[ $_rel == 0.* ]]; then
               if [[ ! ${{ env.TAG }} == *rc* ]]; then
-                sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
+                _newrel=1
               else
                 _rel=${_rel#*.}
-                sudo sed -i -e "/^pkgrel=/c\pkgrel=0.$((${_rel}+1))" PKGBUILD
+                _newrel=0.$((${_rel}+1))
               fi
             else
-              sudo sed -i -e "/^pkgrel=/c\pkgrel=$((${_rel}+1))" PKGBUILD
+              _newrel=$((${_rel}+1))
             fi
             _ver=$(echo $repover | cut -d- -f1)
             _gitver=$(grep ^pkgver= PKGBUILD | cut -d= -f2)
-            [[ $(vercmp $_gitver $_ver) == 1 ]] && sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
-            sudo git add PKGBUILD
-            sudo git commit -m"${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
-            sudo git push
+            [[ $(vercmp $_gitver $_ver) == 1 ]] && _newrel=1
+            sudo sed -i -e "/^pkgrel=/c\pkgrel=$_newrel" PKGBUILD
+            if [[ $_newrel != $_rel ]]; then
+              sudo git add PKGBUILD
+              sudo git commit -m"${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
+              sudo git push
+            fi
             cd ..
           fi
         done
