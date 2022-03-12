@@ -200,10 +200,10 @@ runs:
             _m=$m
             [[ $m == "spl_zfs" ]] && _m=zfs
             [[ $m == "virtualbox-modules" ]] && _m=virtualbox-host-modules
+            cd $m
             repover=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | rev | cut -d' ' -f1 | rev)
             _rel=$(echo $repover | cut -d- -f2)
             _gitrel=$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)
-            cd $m
             if [[ $_rel == 0.* ]]; then
               if [[ ! ${{ env.TAG }} == *rc* ]]; then
                 _newrel=1
