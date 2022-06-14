@@ -136,6 +136,11 @@ runs:
           ver_maj=$(printf "%s.%s" "$(echo ${repover} | cut -d. -f1)" "$(echo ${repover} | cut -d. -f2)")
           ver_min=$(echo ${repover} | cut -d. -f3)
           ver_new=${ver_maj}.$((${ver_min}+1))
+          if [[ $repover == *rc* ]]; then
+            ver_maj=$(echo $repover | cut -d'r' -f1) 
+            _rc=$(echo ${repover} | cut -d'c' -f2)
+            ver_new=${ver_maj}rc$((${_rc}+1))
+          fi
           sudo sed -i -e "/^pkgver=/c\pkgver=${ver_new}" PKGBUILD
           sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
           echo "update PKGBUILD"
