@@ -139,7 +139,9 @@ runs:
           if [[ $repover == *rc* ]]; then
             ver_maj=$(echo $repover | cut -d'r' -f1) 
             _rc=$(echo ${repover} | cut -d'c' -f2)
-            ver_new=${ver_maj}rc$((${_rc}+1))
+            _rc_new=rc$((${_rc}+1))
+            sudo sed -i -e "/^_rc=/c\_rc=${rc_new}" PKGBUILD
+            ver_new=${ver_maj}${_rc_new}
           fi
           sudo sed -i -e "/^pkgver=/c\pkgver=${ver_new}" PKGBUILD
           sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
