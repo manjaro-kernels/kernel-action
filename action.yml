@@ -141,24 +141,24 @@ runs:
           sudo chown -R ${UID}:${UID} ${KERNEL}
           cd ${KERNEL}
           repover=$(sudo pacman -Syi ${KERNEL} | grep Version | rev | cut -d' ' -f1 | rev | cut -d- -f1)
-          ver_maj=$(printf "%s.%s" "$(echo ${repover} | cut -d. -f1)" "$(echo ${repover} | cut -d. -f2)")
-          ver_min=$(echo ${repover} | cut -d. -f3)
-          ver_new=${ver_maj}.$((${ver_min}+1))
           if [[ $repover == *rc* ]]; then
-            ver_maj=$(echo $repover | cut -d'r' -f1) 
+            ver_maj=$(echo $repover | cut -d'r' -f1)
             _rc=$(echo ${repover} | cut -d'c' -f2)
             _rc_new=rc$((${_rc}+1))
-            sudo sed -i -e "/^_rc=/c\_rc=${_rc_new}" PKGBUILD
             ver_new=${ver_maj}${_rc_new}
+          else
+            ver_maj=$(printf "%s.%s" "$(echo ${repover} | cut -d. -f1)" "$(echo ${repover} | cut -d. -f2)")
+            ver_min=$(echo ${repover} | cut -d. -f3)
+            ver_new=${ver_maj}.$((${ver_min}+1))
           fi
-          sudo sed -i -e "/^pkgver=/c\pkgver=${ver_new}" PKGBUILD
-          sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
-          echo "update PKGBUILD"
-          updpkgsums
-          sudo git add PKGBUILD
-          sudo git commit -m"${ver_new}"
-          sudo git push
-          cd ..
+            sudo sed -i -e "/^pkgver=/c\pkgver=${ver_new}" PKGBUILD
+            sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
+            echo "update PKGBUILD"
+            updpkgsums
+            sudo git add PKGBUILD
+            sudo git commit -m"${ver_new}"
+            sudo git push
+            cd ..
         fi
     - name: build_kernel
       shell: bash
