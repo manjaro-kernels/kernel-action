@@ -61,7 +61,7 @@ runs:
         zip \
         python3-pip
         sudo pip3 install meson
-        sudo pip3 install ninja
+        sudo pip3 install ninja==1.10.2.4
     - id: install_pacman
       shell: bash
       env:
