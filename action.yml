@@ -18,9 +18,9 @@ inputs:
     required: false
     default: false
   bump-modules:
-    description: 'bump modules pkgrel in PKGBUILD'
+    description: 'bump modules pkgrel in PKGBUILD. Possible values: git, repo, none'
     required: false
-    default: false
+    default: "none"
   realtime:
     description: 'is realtime-kernel'
     required: false
@@ -216,14 +216,19 @@ runs:
           else
             sudo git clone "https://mjr-build-server:${{ inputs.gitlab-pw }}@gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
           fi
-          if [[ "${{ inputs.bump-modules }}" == "true" ]]; then
+          if [[ ! "${{ inputs.bump-modules }}" == "none" ]]; then
             _m=$m
             [[ $m == "spl_zfs" ]] && _m=zfs
             [[ $m == "virtualbox-modules" ]] && _m=virtualbox-host-modules
             cd $m
             repover=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | rev | cut -d' ' -f1 | rev)
-            _rel=$(echo $repover | cut -d- -f2)
+            _reporel=$(echo $repover | cut -d- -f2)
             _gitrel=$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)
+            if [[ "${{ inputs.bump-modules }}" == "git" ]]; then
+              _rel=$_gitrel
+            elif [[ "${{ inputs.bump-modules }}" == "repo" ]]; then
+              _rel=$_reporel
+            fi
             if [[ $_rel == 0.* ]]; then
               if [[ ! ${{ env.TAG }} == *rc* ]]; then
                 _newrel=1
