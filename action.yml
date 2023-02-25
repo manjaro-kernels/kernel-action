@@ -127,7 +127,7 @@ runs:
         sudo ./install.sh
         echo 'PACKAGER="Manjaro Build Server <build@manjaro.org>"' | sudo tee -a /etc/makepkg.conf > /dev/null
         popd
-        rm -rf manjaro-chrootbuild
+        sudo rm -rf manjaro-chrootbuild
     - id: clone_repo
       shell: bash
       run: |
