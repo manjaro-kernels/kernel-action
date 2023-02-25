@@ -94,6 +94,7 @@ runs:
         sudo sed -i -e "s/@PACKAGE_VERSION@/${contrib_ver}/; s/@libmakepkgdir@/\/usr\/share\/makepkg/" updpkgsums.sh.in
         sudo install -m755 updpkgsums.sh.in /usr/bin/updpkgsums
         popd
+        rm -rf pacman-${PACMAN_VERSION}
     - id: install_keyrings
       shell: bash
       run: |
@@ -105,7 +106,7 @@ runs:
           sudo install -m0644 manjaro-trusted /usr/share/pacman/keyrings/
           sudo install -m0644 manjaro-trusted /usr/share/pacman/keyrings/
         popd
-
+        rm -rf manjaro-keyring
 
         mkdir -p archlinux-keyring
         pushd archlinux-keyring
@@ -117,6 +118,7 @@ runs:
         popd
         sudo pacman-key --init
         sudo pacman-key --populate archlinux manjaro
+        rm -rf archlinux-keyring
     - id: install_manjaro-chrootbuild
       shell: bash
       run: |
@@ -125,6 +127,7 @@ runs:
         sudo ./install.sh
         echo 'PACKAGER="Manjaro Build Server <build@manjaro.org>"' | sudo tee -a /etc/makepkg.conf > /dev/null
         popd
+        rm -rf manjaro-chrootbuild
     - id: clone_repo
       shell: bash
       run: |
@@ -159,6 +162,7 @@ runs:
             sudo git add PKGBUILD
             sudo git commit -m"${ver_new}"
             sudo git push
+            rm -rf src
             cd ..
         fi
     - name: build_kernel
@@ -174,6 +178,7 @@ runs:
             gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg-passphrase }}" --detach-sign ${p}
           done
         fi
+        sudo rm -rf /var/lib/chrootbuild
     - id: publish_kernel
       shell: bash -O extglob {0}
       run: |
