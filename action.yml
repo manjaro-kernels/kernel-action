@@ -178,7 +178,6 @@ runs:
             gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg-passphrase }}" --detach-sign ${p}
           done
         fi
-        sudo rm -rf /var/lib/chrootbuild
     - id: publish_kernel
       shell: bash -O extglob {0}
       run: |
@@ -193,6 +192,7 @@ runs:
         gh release upload ${_tag} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${_tag}.zip
         echo "TAG=${_tag}" >>$GITHUB_ENV
         echo "GITHUB_LINK=${GITHUB_LINK}" >>$GITHUB_ENV
+        sudo rm -rf /var/lib/chrootbuild
     - name: create kernel btf
       shell: bash -O extglob {0}
       run: |
