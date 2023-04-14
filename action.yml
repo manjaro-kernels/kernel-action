@@ -163,6 +163,7 @@ runs:
             sudo git commit -m"${ver_new}"
             sudo git push
             rm -rf src
+            sudo rm -rf .git
             cd ..
         fi
     - name: build_kernel
@@ -252,6 +253,7 @@ runs:
               sudo git add PKGBUILD
               sudo git commit -m"${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
               sudo git push
+              sudo rm -rf .git
             fi
             cd ..
           fi
