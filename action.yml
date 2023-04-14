@@ -69,7 +69,7 @@ runs:
       run: |
         sudo git clone --depth 1 https://gitlab.manjaro.org/packages/core/pacman.git
         pushd pacman
-        sudo wget https://sources.archlinux.org/other/pacman/pacman-${PACMAN_VERSION}.tar.xz
+        sudo curl --compressed -sLO https://sources.archlinux.org/other/pacman/pacman-${PACMAN_VERSION}.tar.xz
         sudo tar -xvf pacman-${PACMAN_VERSION}.tar.xz
         pushd pacman-${PACMAN_VERSION}
         sudo patch -p1 -i ../pacman-sync-first-option.patch
@@ -88,8 +88,8 @@ runs:
         sudo mkdir -p /etc/pacman.d
         echo "Server = ${{ inputs.build-mirror }}/${{ inputs.branch }}/\$repo/\$arch" | sudo tee /etc/pacman.d/mirrorlist
         # install updpkgsums
-        sudo wget https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/src/updpkgsums.sh.in
-        sudo wget https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/configure.ac
+        sudo curl --compressed -sLO https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/src/updpkgsums.sh.in
+        sudo curl --compressed -sLO https://gitlab.archlinux.org/pacman/pacman-contrib/-/raw/master/configure.ac
         contrib_ver=$(grep AC_INIT configure.ac | cut -d[ -f3 | cut -d] -f1)
         sudo sed -i -e "s/@PACKAGE_VERSION@/${contrib_ver}/; s/@libmakepkgdir@/\/usr\/share\/makepkg/" updpkgsums.sh.in
         sudo install -m755 updpkgsums.sh.in /usr/bin/updpkgsums
@@ -110,7 +110,7 @@ runs:
 
         mkdir -p archlinux-keyring
         pushd archlinux-keyring
-          wget https://archlinux.org/packages/core/any/archlinux-keyring/download -O /tmp/archlinux-keyring.tar.zst
+          curl --compressed -sL https://archlinux.org/packages/core/any/archlinux-keyring/download -o /tmp/archlinux-keyring.tar.zst
           tar --use-compress-program=unzstd --strip-components=4 --wildcards -xvf /tmp/archlinux-keyring.tar.zst usr/share/pacman/keyrings/*
           sudo install -m0644 archlinux.gpg /usr/share/pacman/keyrings/
           sudo install -m0644 archlinux-trusted /usr/share/pacman/keyrings/
