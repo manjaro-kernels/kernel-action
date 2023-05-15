@@ -249,7 +249,7 @@ runs:
             _gitver=$(grep ^pkgver= PKGBUILD | cut -d= -f2)
             [[ $(vercmp $_gitver $_ver) == 1 ]] && _newrel=1
             sudo sed -i -e "/^pkgrel=/c\pkgrel=$_newrel" PKGBUILD
-            if [[ $_newrel != $_rel ]]; then
+            if [[ "$_newrel" != "$_gitrel" ]]; then
               sudo git add PKGBUILD
               sudo git commit -m"${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
               sudo git push
