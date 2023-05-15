@@ -227,33 +227,37 @@ runs:
             [[ $m == "spl_zfs" ]] && _m=zfs
             [[ $m == "virtualbox-modules" ]]  || [[ $m == "virtualbox" ]] && _m=virtualbox-host-modules
             cd $m
-            repover=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | rev | cut -d' ' -f1 | rev)
-            _reporel=$(echo $repover | cut -d- -f2)
-            _gitrel=$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)
-            if [[ "${{ inputs.bump-modules }}" == "git" ]]; then
-              _rel=$_gitrel
-            elif [[ "${{ inputs.bump-modules }}" == "repo" ]]; then
-              _rel=$_reporel
-            fi
-            if [[ $_rel == 0.* ]]; then
-              if [[ ! ${{ env.TAG }} == *rc* ]]; then
-                _newrel=1
+            repover=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | rev | cut -d' ' -f1 | rev) || true
+            if [[ ! -z "$repover" ]]; then
+              _reporel=$(echo $repover | cut -d- -f2)
+              _gitrel=$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)
+              if [[ "${{ inputs.bump-modules }}" == "git" ]]; then
+                _rel=$_gitrel
+              elif [[ "${{ inputs.bump-modules }}" == "repo" ]]; then
+                _rel=$_reporel
+              fi
+              if [[ $_rel == 0.* ]]; then
+                if [[ ! ${{ env.TAG }} == *rc* ]]; then
+                  _newrel=1
+                else
+                  _rel=${_rel#*.}
+                  _newrel=0.$((${_rel}+1))
+                fi
               else
-                _rel=${_rel#*.}
-                _newrel=0.$((${_rel}+1))
+                _newrel=$((${_rel}+1))
+              fi
+              _ver=$(echo $repover | cut -d- -f1)
+              _gitver=$(grep ^pkgver= PKGBUILD | cut -d= -f2)
+              [[ $(vercmp $_gitver $_ver) == 1 ]] && _newrel=1
+              sudo sed -i -e "/^pkgrel=/c\pkgrel=$_newrel" PKGBUILD
+              if [[ "$_newrel" != "$_gitrel" ]]; then
+                sudo git add PKGBUILD
+                sudo git commit -m"${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
+                sudo git push
+                sudo rm -rf .git
               fi
             else
-              _newrel=$((${_rel}+1))
-            fi
-            _ver=$(echo $repover | cut -d- -f1)
-            _gitver=$(grep ^pkgver= PKGBUILD | cut -d= -f2)
-            [[ $(vercmp $_gitver $_ver) == 1 ]] && _newrel=1
-            sudo sed -i -e "/^pkgrel=/c\pkgrel=$_newrel" PKGBUILD
-            if [[ "$_newrel" != "$_gitrel" ]]; then
-              sudo git add PKGBUILD
-              sudo git commit -m"${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
-              sudo git push
-              sudo rm -rf .git
+              echo "$m doesn't exist yet in repo. Attempting initial build."
             fi
             cd ..
           fi
