@@ -225,7 +225,7 @@ runs:
           if [[ ! "${{ inputs.bump-modules }}" == "none" ]]; then
             _m=$m
             [[ $m == "spl_zfs" ]] && _m=zfs
-            [[ $m == "virtualbox-modules" ]] && _m=virtualbox-host-modules
+            [[ $m == "virtualbox-modules" ]]  || [[ $m == "virtualbox" ]] && _m=virtualbox-host-modules
             cd $m
             repover=$(sudo pacman -Syi ${{ env.KERNEL }}-$_m | grep Version | rev | cut -d' ' -f1 | rev)
             _reporel=$(echo $repover | cut -d- -f2)
