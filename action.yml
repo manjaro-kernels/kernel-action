@@ -119,6 +119,13 @@ runs:
         sudo pacman-key --init
         sudo pacman-key --populate archlinux manjaro
         sudo rm -rf archlinux-keyring
+    - id: cleanup_space_workaround
+      shell: bash
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
     - id: install_manjaro-chrootbuild
       shell: bash
       run: |
