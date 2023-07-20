@@ -265,4 +265,4 @@ runs:
         sudo zip "linux-${{ env.TAG }}-extramodules.zip" ./*.zst ./*.sig
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=${{ env.GITHUB_LINK }}
-        gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip ./linux-${{ env.TAG }}-logs.zip # ./*.tar
+        gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip # ./*.tar
