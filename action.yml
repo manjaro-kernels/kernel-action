@@ -155,7 +155,7 @@ runs:
             echo "update PKGBUILD"
             updpkgsums
             sudo git add PKGBUILD
-            sudo git commit -m"${ver_new}"
+            sudo git commit -m"[pkg-upd] ${ver_new}-1"
             sudo git push
             sudo rm -rf src
             cd ..
