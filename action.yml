@@ -189,7 +189,8 @@ runs:
                 sudo git add config.rt
             else
                 sudo git add config
-            fi updpkgsums
+            fi
+            updpkgsums
             sudo git add PKGBUILD
             sudo git commit -m"update config"
             sudo git push
