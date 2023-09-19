@@ -175,15 +175,19 @@ runs:
         fi
         CHRSRC=/var/lib/chrootbuild/build/${{ env.KERNEL }}
         . ${CHRSRC}/PKGBUILD
+        if [[ ! -z ${_rc} ]]; then
+            _confpath=${CHRSRC}/src/linux-${_basekernel}-${_rc}
+        else
+            _confpath=${CHRSRC}/src/linux-${_basekernel}
+        fi
         if [[ "${{ inputs.bump-kernel }}" == "true" ]]; then
             cd ${{ env.KERNEL }}
             if [[ -e config.rt ]]; then
                 sudo rm config.rt
-                sudo cp "${CHRSRC}/src/linux-${_basekernel}/.config" config.rt
-                cp src/linux*/.config config.rt
+                sudo cp "${_confpath}/.config" config.rt
             else
                 sudo rm config
-                sudo cp "${CHRSRC}/src/linux-${_basekernel}/.config" config
+                sudo cp "${_confpath}/.config" config
             fi
             if [[ -e config.rt ]]; then
                 sudo git add config.rt
