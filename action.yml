@@ -198,7 +198,7 @@ runs:
             updpkgsums
             sudo git add PKGBUILD
             sudo git commit -m"update config"
-            sudo git push
+            sudo git push || true
             sudo rm -rf .git
             cd ..
         fi
