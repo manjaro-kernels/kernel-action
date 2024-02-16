@@ -14,7 +14,11 @@ inputs:
     required: false
     default: "unstable"
   bump-kernel:
-    description: 'get kernel repo version and buld higher dot release'
+    description: 'get kernel repo version and build higher dot release'
+    required: false
+    default: false
+  bump-pkgrel:
+    description: 'get kernel repo pkgrel and bump'
     required: false
     default: false
   bump-modules:
@@ -159,6 +163,13 @@ runs:
             sudo git push
             sudo rm -rf src
             cd ..
+        elif [[ "${{ inputs.bump-pkgrel }}" == "true" ]]; then
+          sudo chown -R ${UID}:${UID} ${KERNEL}
+          cd ${KERNEL}
+          reporel=$(sudo pacman -Syi ${KERNEL} | grep Version | cut -d'-' -f2)
+          rel_new=$((${reporel}+1))
+          sudo sed -i -e "/^pkgrel=/c\pkgrel=${rel_new}" PKGBUILD
+          cd ..
         fi
     - name: build_kernel
       shell: bash
