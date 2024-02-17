@@ -40,21 +40,12 @@ runs:
   using: "composite"
   steps:
     - id: install_build-dependencies
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: build-essential cmake fakeroot git libarchive-dev libarchive-tools libcurl4-openssl-dev libgpgme-dev libssl-dev zip python3-pip
+    - id: install_pip-dependencies
       shell: bash
       run: |
-        sudo apt-get update
-        sudo apt-get install \
-        build-essential \
-        cmake \
-        fakeroot \
-        git \
-        libarchive-dev \
-        libarchive-tools \
-        libcurl4-openssl-dev \
-        libgpgme-dev \
-        libssl-dev \
-        zip \
-        python3-pip
         sudo pip3 install meson
         sudo pip3 install ninja
     - id: install_pacman
