@@ -139,10 +139,10 @@ runs:
         sudo git config --global user.name "Manjaro Build Server"
         sudo git config --global user.email "build@manjaro.org"
         echo "KERNEL=${KERNEL}" >>$GITHUB_ENV
+        repover=$(sudo pacman -Syi ${KERNEL} | grep Version | rev | cut -d' ' -f1 | rev | cut -d- -f1)
         if [[ "${{ inputs.bump-kernel }}" == "true" ]]; then
           sudo chown -R ${UID}:${UID} ${KERNEL}
           cd ${KERNEL}
-          repover=$(sudo pacman -Syi ${KERNEL} | grep Version | rev | cut -d' ' -f1 | rev | cut -d- -f1)
           if [[ $repover == *rc* ]]; then
             ver_maj=$(echo $repover | cut -d'r' -f1)
             _rc=$(echo ${repover} | cut -d'c' -f2)
@@ -164,12 +164,18 @@ runs:
             sudo rm -rf src
             cd ..
         elif [[ "${{ inputs.bump-pkgrel }}" == "true" ]]; then
-          sudo chown -R ${UID}:${UID} ${KERNEL}
-          cd ${KERNEL}
-          reporel=$(sudo pacman -Syi ${KERNEL} | grep Version | cut -d'-' -f2)
-          rel_new=$((${reporel}+1))
-          sudo sed -i -e "/^pkgrel=/c\pkgrel=${rel_new}" PKGBUILD
-          cd ..
+          . ${KERNEL}/PKGBUILD
+          if [[ "$pkgver" != "$repover"]]; then
+            sudo chown -R ${UID}:${UID} ${KERNEL}
+            cd ${KERNEL}
+            reporel=$(sudo pacman -Syi ${KERNEL} | grep Version | cut -d'-' -f2)
+            rel_new=$((${reporel}+1))
+            sudo sed -i -e "/^pkgrel=/c\pkgrel=${rel_new}" PKGBUILD
+            sudo git add PKGBUILD
+            sudo git commit -m"[pkg-upd] pkgrel ${rel_new}"
+            sudo git push
+            cd ..
+          fi
         fi
     - name: build_kernel
       shell: bash
