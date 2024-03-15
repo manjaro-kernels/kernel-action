@@ -165,7 +165,7 @@ runs:
             cd ..
         elif [[ "${{ inputs.bump-pkgrel }}" == "true" ]]; then
           . ${KERNEL}/PKGBUILD
-          if [[ "$pkgver" != "$repover" ]]; then
+          if [[ "$pkgver" == "$repover" ]]; then
             sudo chown -R ${UID}:${UID} ${KERNEL}
             cd ${KERNEL}
             reporel=$(sudo pacman -Syi ${KERNEL} | grep Version | cut -d'-' -f2)
