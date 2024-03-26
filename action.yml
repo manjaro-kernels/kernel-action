@@ -139,8 +139,8 @@ runs:
         sudo git config --global user.name "Manjaro Build Server"
         sudo git config --global user.email "build@manjaro.org"
         echo "KERNEL=${KERNEL}" >>$GITHUB_ENV
-        repover=$(sudo pacman -Syi ${KERNEL} | grep Version | rev | cut -d' ' -f1 | rev | cut -d- -f1)
         if [[ "${{ inputs.bump-kernel }}" == "true" ]]; then
+          repover=$(sudo pacman -Syi ${KERNEL} | grep Version | rev | cut -d' ' -f1 | rev | cut -d- -f1)
           sudo chown -R ${UID}:${UID} ${KERNEL}
           cd ${KERNEL}
           if [[ $repover == *rc* ]]; then
@@ -164,6 +164,7 @@ runs:
             sudo rm -rf src
             cd ..
         elif [[ "${{ inputs.bump-pkgrel }}" == "true" ]]; then
+          repover=$(sudo pacman -Syi ${KERNEL} | grep Version | rev | cut -d' ' -f1 | rev | cut -d- -f1)
           . ${KERNEL}/PKGBUILD
           if [[ "$pkgver" == "$repover" ]]; then
             sudo chown -R ${UID}:${UID} ${KERNEL}
