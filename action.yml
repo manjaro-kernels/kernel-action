@@ -140,18 +140,18 @@ runs:
         sudo git config --global user.email "build@manjaro.org"
         echo "KERNEL=${KERNEL}" >>$GITHUB_ENV
         if [[ "${{ inputs.bump-kernel }}" == "true" ]]; then
-          repover=$(sudo pacman -Syi ${KERNEL} | grep Version | rev | cut -d' ' -f1 | rev | cut -d- -f1)
+          oldver=$(grep 'pkgver=' ${KERNEL}/PKGBUILD | cut -d'=' -f2)
           sudo chown -R ${UID}:${UID} ${KERNEL}
           cd ${KERNEL}
-          if [[ $repover == *rc* ]]; then
-            ver_maj=$(echo $repover | cut -d'r' -f1)
-            _rc=$(echo ${repover} | cut -d'c' -f2)
+          if [[ $oldver == *rc* ]]; then
+            ver_maj=$(echo $oldver | cut -d'r' -f1)
+            _rc=$(echo ${oldver} | cut -d'c' -f2)
             _rc_new=rc$((${_rc}+1))
             sudo sed -i -e "/^_rc=/c\_rc=${_rc_new}" PKGBUILD
             ver_new=${ver_maj}${_rc_new}
           else
-            ver_maj=$(printf "%s.%s" "$(echo ${repover} | cut -d. -f1)" "$(echo ${repover} | cut -d. -f2)")
-            ver_min=$(echo ${repover} | cut -d. -f3)
+            ver_maj=$(printf "%s.%s" "$(echo ${oldver} | cut -d. -f1)" "$(echo ${oldver} | cut -d. -f2)")
+            ver_min=$(echo ${oldver} | cut -d. -f3)
             ver_new=${ver_maj}.$((${ver_min}+1))
           fi
             sudo sed -i -e "/^pkgver=/c\pkgver=${ver_new}" PKGBUILD
