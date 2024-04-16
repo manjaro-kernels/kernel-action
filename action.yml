@@ -244,7 +244,6 @@ runs:
         pushd modules
         for m in $(cat ../modules.list); do
           sudo git clone "https://mjr-build-server:${{ inputs.gitlab-pw }}@gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
-
           if [[ ! "${{ inputs.bump-modules }}" == "none" ]]; then
             _m=$m
             [[ $m == "spl_zfs" ]] && _m=zfs
