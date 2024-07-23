@@ -318,6 +318,10 @@ runs:
     - id: deploy_bxt
       shell: bash -O extblob {0}
       run: |
+        if [[ -z "${{ inputs.bxt-key }}" ]]; then 
+          echo "## no bxt-API-key provided. unable to deploy."
+          exit 0
+        fi
         if [[ ! -f /home/runner/.chrootbuild-logs/err_list ]]; then
           # Server URL
           BASE_URL="https://bxt.staging.manjaro.org/api/deploy"
