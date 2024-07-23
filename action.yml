@@ -326,7 +326,7 @@ runs:
 
           # Start the deployment and get a session ID
           echo "Starting deployment..."
-          SESSION_ID=$(curl -s -X POST "$BASE_URL/start" -H "key: $API_KEY" -H "job-url: local")
+          SESSION_ID=$(curl -s -X POST "$BASE_URL/start" -H "key: $API_KEY" -H "job-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}")
           if [ -z "$SESSION_ID" ]; then
             echo "Failed to obtain a session ID."
             exit 1
