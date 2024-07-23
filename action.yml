@@ -316,7 +316,7 @@ runs:
         GITHUB_LINK=${{ env.GITHUB_LINK }}
         gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-extramodules.zip # ./*.tar
     - id: deploy_bxt
-      shell: bash -O extblob {0}
+      shell: bash -O extglob {0}
       run: |
         if [[ -z "${{ inputs.bxt-key }}" ]]; then 
           echo "## no bxt-API-key provided. unable to deploy."
