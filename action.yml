@@ -35,7 +35,7 @@ inputs:
   gpg-passphrase:
     description: 'passphrase for gpg key'
     required: true
-  bxt-key:
+  bxt-api-key:
     description: 'bxt api key'
     required: false
 
@@ -318,7 +318,7 @@ runs:
     - id: deploy_bxt
       shell: bash -O extglob {0}
       run: |
-        if [[ -z "${{ inputs.bxt-key }}" ]]; then 
+        if [[ -z "${{ inputs.bxt-api-key }}" ]]; then 
           echo "## no bxt-API-key provided. unable to deploy."
           exit 0
         fi
@@ -326,7 +326,7 @@ runs:
           # Server URL
           BASE_URL="https://bxt.staging.manjaro.org/api/deploy"
           # API key for authentication
-          API_KEY="${{ inputs.bxt-key }}"
+          API_KEY="${{ inputs.bxt-api-key }}"
 
           # Start the deployment and get a session ID
           echo "Starting deployment..."
