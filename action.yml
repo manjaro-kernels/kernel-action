@@ -373,7 +373,7 @@ runs:
           mkdir kernel
           unzip linux-${{ env.TAG }}.zip -d kernel
           # Push kernel
-          for k in $(ls kernel); do
+          for k in $(ls kernel/*.zst); do
             push_package "kernel/${k}" "${{ inputs.branch }}" "core" "x86_64"
           done
 
