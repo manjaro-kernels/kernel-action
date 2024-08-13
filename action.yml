@@ -304,10 +304,12 @@ runs:
     - id: publish_logs
       shell: bash -O extglob {0}
       run: |
-        sudo zip "linux-${{ env.TAG }}-logs.zip" /home/runner/.chrootbuild-logs/*
+        pushd /home/runner/.chrootbuild-logs
+        sudo zip "linux-${{ env.TAG }}-logs.zip" ./*
         echo ${{ github.token }} | gh auth login --with-token
         GITHUB_LINK=${{ env.GITHUB_LINK }}
         gh release upload ${{ env.TAG }} --repo ${GITHUB_REPOSITORY} --clobber ./linux-${{ env.TAG }}-logs.zip # ./*.tar
+        popd
     - id: publish_modules
       shell: bash -O extglob {0}
       run: |
