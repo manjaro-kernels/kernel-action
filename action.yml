@@ -131,7 +131,7 @@ runs:
         sudo rm -rf "/usr/local/share/boost"
         sudo rm -rf "$AGENT_TOOLSDIRECTORY"
         sudo docker image prune --all --force
-        sudo docker builder prune -a
+        sudo docker builder prune -af
         df -h
     - id: install_manjaro-chrootbuild
       shell: bash
