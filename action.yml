@@ -2,8 +2,8 @@ name: 'Manjaro Kernel Action'
 description: 'Builds Manjaro Kernels'
 
 inputs:
-  gitlab-pw:
-    description: 'gitlab password'
+  forgejo-pw:
+    description: 'forgejo password'
     required: true
   build-mirror:
     description: 'pacman-mirror to be used by manjaro-chrootbuild'
@@ -65,8 +65,8 @@ runs:
       env:
         PACMAN_VERSION: 6.0.2
       run: |
-        sudo git clone --depth 1 https://gitlab.manjaro.org/packages/core/pacman.git
-        pushd pacman
+        sudo wget https://code.manjaro.org/packages/PKGBUILDs/raw/branch/main/core/pacman/pacman.conf
+        sudo wget https://code.manjaro.org/packages/PKGBUILDs/raw/branch/main/core/pacman/makepkg.conf
         sudo wget https://sources.archlinux.org/other/pacman/pacman-${PACMAN_VERSION}.tar.xz
         sudo tar -xvf pacman-${PACMAN_VERSION}.tar.xz
         pushd pacman-${PACMAN_VERSION}
@@ -91,20 +91,21 @@ runs:
         contrib_ver=$(grep AC_INIT configure.ac | cut -d[ -f3 | cut -d] -f1)
         sudo sed -i -e "s/@PACKAGE_VERSION@/${contrib_ver}/; s/@libmakepkgdir@/\/usr\/share\/makepkg/" updpkgsums.sh.in
         sudo install -m755 updpkgsums.sh.in /usr/bin/updpkgsums
-        popd
         sudo rm -rf pacman-${PACMAN_VERSION}
     - id: install_keyrings
       shell: bash
       run: |
         sudo install -dm755 /usr/share/pacman/keyrings/
 
-        sudo git clone --depth 1 https://gitlab.manjaro.org/packages/core/manjaro-keyring.git
-        pushd manjaro-keyring
-          sudo install -m0644 manjaro.gpg /usr/share/pacman/keyrings/
-          sudo install -m0644 manjaro-trusted /usr/share/pacman/keyrings/
-          sudo install -m0644 manjaro-trusted /usr/share/pacman/keyrings/
-        popd
-        sudo rm -rf manjaro-keyring
+        sudo wget https://code.manjaro.org/packages/PKGBUILDs/raw/branch/main/core/manjaro-keyring/manjaro.gpg
+        sudo wget https://code.manjaro.org/packages/PKGBUILDs/raw/branch/main/core/manjaro-keyring/manjaro-revoked
+        sudo wget https://code.manjaro.org/packages/PKGBUILDs/raw/branch/main/core/manjaro-keyring/manjaro-trusted
+        sudo install -m0644 manjaro.gpg /usr/share/pacman/keyrings/
+        sudo install -m0644 manjaro-revoked /usr/share/pacman/keyrings/
+        sudo install -m0644 manjaro-trusted /usr/share/pacman/keyrings/
+        sudo rm manjaro.gpg
+        sudo rm manjaro-revoked
+        sudo rm manjaro-trusted
 
         mkdir -p archlinux-keyring
         pushd archlinux-keyring
@@ -136,7 +137,7 @@ runs:
     - id: install_manjaro-chrootbuild
       shell: bash
       run: |
-        sudo git clone --depth 1 https://gitlab.manjaro.org/tools/development-tools/manjaro-chrootbuild
+        sudo git clone --depth 1 https://code.manjaro.org/tools/manjaro-chrootbuild.git
         pushd manjaro-chrootbuild
         sudo ./install.sh
         echo 'PACKAGER="Manjaro Build Server <build@manjaro.org>"' | sudo tee -a /etc/makepkg.conf > /dev/null
@@ -145,11 +146,14 @@ runs:
     - id: clone_repo
       shell: bash
       run: |
+        basedir=$(pwd)
         KERNEL=$(echo ${GITHUB_REPOSITORY} | cut -d'/' -f2)
-        sudo git clone https://mjr-build-server:${{ inputs.gitlab-pw }}@gitlab.manjaro.org/packages/core/${KERNEL}.git
+        sudo git clone https://mjr-build-server:${{ inputs.forgejo-pw }}@code.manjaro.org/packages/PKGBUILDs.git
         sudo git config --global user.name "Manjaro Build Server"
         sudo git config --global user.email "build@manjaro.org"
         echo "KERNEL=${KERNEL}" >>$GITHUB_ENV
+        cd PKGBUILDs/core
+        sudo git config pull.rebase true
         if [[ "${{ inputs.bump-kernel }}" == "true" ]]; then
           oldver=$(grep 'pkgver=' ${KERNEL}/PKGBUILD | cut -d'=' -f2)
           sudo chown -R ${UID}:${UID} ${KERNEL}
@@ -170,7 +174,8 @@ runs:
             echo "update PKGBUILD"
             updpkgsums
             sudo git add PKGBUILD
-            sudo git commit -m"[pkg-upd] ${ver_new}-1"
+            sudo git commit -m"${KERNEL}: Update to ${ver_new}-1"
+            sudo git pull
             sudo git push
             sudo rm -rf src
             cd ..
@@ -184,22 +189,28 @@ runs:
             rel_new=$((${reporel}+1))
             sudo sed -i -e "/^pkgrel=/c\pkgrel=${rel_new}" PKGBUILD
             sudo git add PKGBUILD
-            sudo git commit -m"[pkg-upd] pkgrel ${rel_new}"
+            sudo git commit -m"${KERNEL}: Kernel rebuild"
+            sudo git pull
             sudo git push
             cd ..
           fi
         fi
+        cd ${basedir}
     - name: build_kernel
       shell: bash
       run: |
+        basedir=$(pwd)
+        cd PKGBUILDs/core
         sudo chrootbuild -p ${{ env.KERNEL }} -b ${{ inputs.branch }}
         if [ -z "${{ inputs.gpg-key }}" ] || [ -z "${{ inputs.gpg-passphrase }}" ]; then
           echo "## gpg credentials not provided. Skip signing."
         else
+          sudo chmod go+w $(pwd) -v
           cat <(echo -e "${{ inputs.gpg-key }}" | base64 --decode) | gpg --batch --import &>/dev/null
           for p in $(find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)'); do
             echo "## signing $p"
             gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg-passphrase }}" --detach-sign ${p}
+            sudo mv -v ${p}* ${basedir}
           done
         fi
         CHRSRC=/var/lib/chrootbuild/build/${{ env.KERNEL }}
@@ -226,11 +237,13 @@ runs:
             fi
             updpkgsums
             sudo git add PKGBUILD
-            sudo git commit -m"update config" || true
+            sudo git commit -m"${KERNEL}: Update config" || true
+            sudo git pull
             sudo git push
             sudo rm -rf .git
             cd ..
         fi
+        cd ${basedir}
     - id: publish_kernel
       shell: bash -O extglob {0}
       run: |
@@ -249,12 +262,12 @@ runs:
     - name: get modules
       shell: bash
       run: |
-        sudo cp ${{ env.KERNEL }}/modules.list .
+        basedir=$(pwd)
+        cd PKGBUILDs/extra/${{ env.KERNEL }}-extramodules
+        sudo cp -v ${basedir}/PKGBUILDs/core/${{ env.KERNEL }}/modules.list .
         sudo sed -i -e '/^#/d' modules.list
-        sudo mkdir modules
-        pushd modules
-        for m in $(cat ../modules.list); do
-          sudo git clone "https://mjr-build-server:${{ inputs.gitlab-pw }}@gitlab.manjaro.org/packages/extra/${{ env.KERNEL }}-extramodules/$m.git"
+        sudo mv -v modules.list ../${{ env.KERNEL }}-extramodules.list
+        for m in $(cat ../${{ env.KERNEL }}-extramodules.list); do
           if [[ ! "${{ inputs.bump-modules }}" == "none" ]]; then
             _m=$m
             [[ $m == "spl_zfs" ]] && _m=zfs
@@ -285,7 +298,8 @@ runs:
               sudo sed -i -e "/^pkgrel=/c\pkgrel=$_newrel" PKGBUILD
               if [[ "$_newrel" != "$_gitrel" ]]; then
                 sudo git add PKGBUILD
-                sudo git commit -m"${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
+                sudo git commit -m"${{ env.KERNEL }}-${m}: Update to ${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
+                sudo git pull
                 sudo git push
                 sudo rm -rf .git
               fi
@@ -295,20 +309,25 @@ runs:
             cd ..
           fi
         done
-        popd
+        cd ${basedir}
     - id: build_modules
       shell: bash
       run: |
-        sudo chrootbuild -K modules -i "${{ env.KERNEL }}-${{ env.TAG }}*.zst" -i "${{ env.KERNEL }}-headers*.zst" -b ${{ inputs.branch }}
-        sudo rm ./${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig} ./${{ env.KERNEL }}-headers-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig}
+        basedir=$(pwd)
+        cd PKGBUILDs/extra
+        sudo chrootbuild -K ${{ env.KERNEL }}-extramodules -i "${basedir}/${{ env.KERNEL }}-${{ env.TAG }}*.zst" -i "${basedir}/${{ env.KERNEL }}-headers*.zst" -b ${{ inputs.branch }}
+        sudo rm ${basedir}/${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig} ${basedir}/${{ env.KERNEL }}-headers-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig}
         if [ -z "${{ inputs.gpg-key }}" ] || [ -z "${{ inputs.gpg-passphrase }}" ]; then 
           echo "## gpg credentials not provided. Skip signing."
         else
+          sudo chmod go+w $(pwd) -v
           for p in $(find $PWD -maxdepth 1 -regex '.*\.pkg\.tar\.\(xz\|zst\)'); do
             echo "## signing $p"
             gpg --pinentry-mode loopback --passphrase "${{ inputs.gpg-passphrase }}" --detach-sign ${p}
+            mv -v ${p}* ${basedir}
           done
         fi
+        cd ${basedir}
     - id: publish_logs
       shell: bash -O extglob {0}
       run: |
