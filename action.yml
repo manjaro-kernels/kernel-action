@@ -169,13 +169,13 @@ runs:
             ver_min=$(echo ${oldver} | cut -d. -f3)
             ver_new=${ver_maj}.$((${ver_min}+1))
           fi
-            sudo git pull
             sudo sed -i -e "/^pkgver=/c\pkgver=${ver_new}" PKGBUILD
             sudo sed -i -e "/^pkgrel=/c\pkgrel=1" PKGBUILD
             echo "update PKGBUILD"
             updpkgsums
             sudo git add PKGBUILD
             sudo git commit -m"${KERNEL}: Update to ${ver_new}-1"
+            sudo git pull
             sudo git push
             sudo rm -rf src
             cd ..
@@ -190,6 +190,7 @@ runs:
             sudo sed -i -e "/^pkgrel=/c\pkgrel=${rel_new}" PKGBUILD
             sudo git add PKGBUILD
             sudo git commit -m"${KERNEL}: Kernel rebuild"
+            sudo git pull
             sudo git push
             cd ..
           fi
@@ -234,10 +235,10 @@ runs:
             else
                 sudo git add config
             fi
-            sudo git pull
             updpkgsums
             sudo git add PKGBUILD
             sudo git commit -m"${KERNEL}: Update config" || true
+            sudo git pull
             sudo git push
             sudo rm -rf .git
             cd ..
@@ -294,11 +295,11 @@ runs:
               _ver=$(echo $repover | cut -d- -f1)
               _gitver=$(grep ^pkgver= PKGBUILD | cut -d= -f2)
               ## [[ $(vercmp $_gitver $_ver) == 1 ]] && _newrel=1
-              sudo git pull
               sudo sed -i -e "/^pkgrel=/c\pkgrel=$_newrel" PKGBUILD
               if [[ "$_newrel" != "$_gitrel" ]]; then
                 sudo git add PKGBUILD
                 sudo git commit -m"${{ env.KERNEL }}-${m}: Update to ${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
+                sudo git pull
                 sudo git push
                 sudo rm -rf .git
               fi
@@ -316,7 +317,7 @@ runs:
         cd PKGBUILDs/extra
         sudo chrootbuild -K ${{ env.KERNEL }}-extramodules -i "${basedir}/${{ env.KERNEL }}-${{ env.TAG }}*.zst" -i "${basedir}/${{ env.KERNEL }}-headers*.zst" -b ${{ inputs.branch }}
         sudo rm ${basedir}/${{ env.KERNEL }}-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig} ${basedir}/${{ env.KERNEL }}-headers-${{ env.TAG }}-x86_64.pkg.tar.zst{,.sig}
-        if [ -z "${{ inputs.gpg-key }}" ] || [ -z "${{ inputs.gpg-passphrase }}" ]; then
+        if [ -z "${{ inputs.gpg-key }}" ] || [ -z "${{ inputs.gpg-passphrase }}" ]; then 
           echo "## gpg credentials not provided. Skip signing."
         else
           sudo chmod go+w $(pwd) -v
