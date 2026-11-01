@@ -174,7 +174,7 @@ runs:
             echo "update PKGBUILD"
             updpkgsums
             sudo git add PKGBUILD
-            sudo git commit -m"${KERNEL}: Update to ${ver_new}-1"
+            sudo git commit -m"[pkg-upd] ${KERNEL}: ${ver_new}-1"
             sudo git pull
             sudo git push
             sudo rm -rf src
@@ -189,7 +189,7 @@ runs:
             rel_new=$((${reporel}+1))
             sudo sed -i -e "/^pkgrel=/c\pkgrel=${rel_new}" PKGBUILD
             sudo git add PKGBUILD
-            sudo git commit -m"${KERNEL}: Kernel rebuild"
+            sudo git commit -m"[pkg-reb] ${KERNEL}: Kernel rebuild"
             sudo git pull
             sudo git push
             cd ..
@@ -237,7 +237,7 @@ runs:
             fi
             updpkgsums
             sudo git add PKGBUILD
-            sudo git commit -m"${KERNEL}: Update config" || true
+            sudo git commit -m"[prepare] ${KERNEL}: Update config" || true
             sudo git pull
             sudo git push
             sudo rm -rf .git
@@ -298,7 +298,7 @@ runs:
               sudo sed -i -e "/^pkgrel=/c\pkgrel=$_newrel" PKGBUILD
               if [[ "$_newrel" != "$_gitrel" ]]; then
                 sudo git add PKGBUILD
-                sudo git commit -m"${{ env.KERNEL }}-${m}: Update to ${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
+                sudo git commit -m"[pkg-upd] ${{ env.KERNEL }}-${m}: ${_gitver}-$(grep "^pkgrel=" PKGBUILD | cut -d= -f2)"
                 sudo git pull
                 sudo git push
                 sudo rm -rf .git
